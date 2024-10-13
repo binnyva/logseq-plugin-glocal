@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { useAppVisible } from "./utils";
+import Calendar from "./components/calender";
 
 function App() {
   const innerRef = useRef<HTMLDivElement>(null);
@@ -7,15 +8,16 @@ function App() {
   if (visible) {
     return (
       <main
-        className="bg-gray-800 fixed inset-0 flex items-center justify-center"
+        className="h-full w-full border border-red-500 p-2"
         onClick={(e) => {
+          console.log("Closing: ", innerRef.current, e.target);
           if (!innerRef.current?.contains(e.target as any)) {
             window.logseq.hideMainUI();
           }
         }}
       >
-        <div ref={innerRef} className="text-size-2em text-gray-100">
-          Welcome to [[Logseq]] Plugins!
+        <div ref={innerRef} className="text-size-2em text-gray-100 h-full border border-blue-500">
+          <Calendar />
         </div>
       </main>
     );
