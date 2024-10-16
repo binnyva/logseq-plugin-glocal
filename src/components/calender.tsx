@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   format,
   addMonths,
@@ -11,13 +11,51 @@ import {
   startOfWeek,
   endOfWeek
 } from 'date-fns';
+import { PageEntity } from '@logseq/libs/dist/LSPlugin';
 
 interface CalendarProps {
   initialDate?: Date;
 }
 
+async function getJournalEntriesFromTo(startDate: Date, endDate: Date): Promise<PageEntity[]> {  
+  let pages;
+  try {
+    pages = await logseq.DB.datascriptQuery(`
+      [:find (pull ?p [
+            :block/name :block/properties :block/journal-day :block/uuid :block/original-name
+          ])
+       :where
+       [?b :block/page ?p]
+       [?p :block/journal? true]
+       [?p :block/journal-day ?d]
+       [(>= ?d ${format(startDate, 'yyyyMMdd')})] [(<= ?d ${format(endDate,'yyyyMMdd')})]]
+    `)
+  } catch (e) {
+    console.error(e)
+  }
+  
+  return pages;
+}
+
 const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
+  const [entries, setEntries] = useState<PageEntity[]>([]);
+
+  useEffect(() => {
+    const fetchEntries = async () => {
+      const start = startOfWeek(startOfMonth(currentDate));
+      const end = endOfWeek(endOfMonth(currentDate));
+
+      const journalEntries = await getJournalEntriesFromTo(start, end);
+      setEntries(journalEntries);
+    };
+
+    fetchEntries();
+  }, [currentDate]);
+
+  // useEffect(() => {
+  //   console.log(entries);
+  // }, [entries])
 
   const weekDayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -29,6 +67,16 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     setCurrentDate(addMonths(currentDate, 1));
   };
 
+  const openJournal = (day: string): void => {
+    const journal = entries.find(
+      (journal) => journal[0]["journal-day"].toString() === day
+    );
+    if(!journal) return;
+    // logseq.Editor.openInRightSidebar(journal[0].uuid); // May be if shift is pressed
+    logseq.App.pushState('page', { name: journal[0]['original-name'] })
+    window.logseq.hideMainUI();
+  }
+
   const getDaysToDisplay = (): Date[] => {
     const start = startOfWeek(startOfMonth(currentDate));
     const end = endOfWeek(endOfMonth(currentDate));
@@ -39,7 +87,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     const days = getDaysToDisplay();
 
     return (
-      <div className="grid grid-cols-7 gap-1 h-full">
+      <div className="grid grid-cols-7 h-85">
         {days.map((day, index) => (
           <div
             key={index}
@@ -48,10 +96,12 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
             }`}
           >
             <span className={`text-sm p-1
-              ${isSameDay(day, new Date()) ? 'bg-blue-500 text-white rounded-full' : ''}`}>
+              ${isSameDay(day, new Date()) ? 'bg-blue-500 text-white rounded-full' : ''}`}
+              onClick={() => openJournal(format(day, 'yyyyMMdd'))}
+            >
               {format(day, 'd')}
             </span>
-            <div>Title of {format(day, 'Y m d')} goes here</div>
+            <div>Title of {format(day, 'y m d')} goes here</div>
           </div>
         ))}
       </div>
