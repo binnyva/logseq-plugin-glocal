@@ -10,7 +10,7 @@ function App() {
       <main
         className="h-full w-full border border-red-500 p-2"
         onClick={(e) => {
-          console.log("Closing: ", innerRef.current, e.target);
+          console.log("Closing");
           if (!innerRef.current?.contains(e.target as any)) {
             window.logseq.hideMainUI();
           }
