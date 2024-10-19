@@ -33,7 +33,7 @@ function main() {
   logseq.provideModel(createModel());
   logseq.setMainUIInlineStyle({
     position: 'fixed',
-    zIndex: 11,
+    zIndex: 'var(--ls-z-index-level-2)',
     top: '40px',
     left: '0',
     right: '0',

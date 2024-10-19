@@ -144,16 +144,16 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
   return (
     <div className="w-full h-full p-4 rounded shadow">
       <CloseModal onClick={closeCalender} />
-      <div className="flex justify-between items-center mb-4">
-        <button onClick={prevMonth}>
+      <div className="flex flex-none items-center mb-4">
+        <button onClick={prevMonth} className="px-4">
           <span className="h-4 w-4">&lt;</span>
+        </button>
+        <button onClick={nextMonth} className="px-4">
+          <span className="h-4 w-4">&gt;</span>
         </button>
         <h2 className="text-lg font-semibold">
           {format(currentDate, "MMMM yyyy")}
         </h2>
-        <button onClick={nextMonth}>
-          <span className="h-4 w-4">&gt;</span>
-        </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center mb-2">
         {weekDayLabels.map((day) => (

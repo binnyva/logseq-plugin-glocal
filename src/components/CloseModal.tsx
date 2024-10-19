@@ -8,7 +8,7 @@ type CloseModalProps = {
 
 const CloseModal = ({ onClick }: CloseModalProps) => {
   return (
-    <div className="ui__modal-close-wrap absolute top-0 right-0" onClick={onClick}>
+    <div className="ui__modal-close-wrap absolute top-2 right-2" onClick={onClick}>
       <a aria-label="Close" type="button" className="ui__modal-close">
         <svg
           stroke="currentColor"
