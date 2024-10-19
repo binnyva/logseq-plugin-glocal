@@ -1,0 +1,7 @@
+.grid-calendar-columns {
+  grid-template-columns: 5% 13% 13% 13% 13% 13% 13% 13%;
+}
+
+.h-85 {
+  height: 85%;
+}

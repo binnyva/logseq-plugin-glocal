@@ -10,9 +10,12 @@ import {
   isSameDay,
   startOfWeek,
   endOfWeek,
+  getWeek,
+  getMonth,
 } from "date-fns";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
 import CloseModal from "./CloseModal";
+import './calender.css';
 
 interface CalendarProps {
   initialDate?: Date;
@@ -42,6 +45,32 @@ async function getJournalEntriesFromTo(
   return pages;
 }
 
+function logseqDate(day: Date): string {
+  return format(day, "yyyyMMdd");
+}
+
+function getWeekDateRange(date: Date) {
+  const weekStart = startOfWeek(date, { weekStartsOn: 0 });
+  const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
+  const weekNumber = getWeek(date, { weekStartsOn: 0 }) // 0 for Sunday, 1 for Monday
+
+  const lastSunday = format(weekStart, "MMM d");
+  const nextSaturday = format(
+    weekEnd,
+    getMonth(weekStart) != getMonth(weekEnd) ? "MMM d" : "d" // if weeks start and stop in separate months, show month name in end too.
+  );
+
+  const year = format(date, "yyyy");
+
+  return `${year} W${weekNumber} ${lastSunday}-${nextSaturday}`;
+}
+
+function* chunk<T>(arr: T[], n: number): Generator<T[], void> {
+  for (let i = 0; i < arr.length; i += n) {
+    yield arr.slice(i, i + n);
+  }
+}
+
 const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
   const [entries, setEntries] = useState<PageEntity[]>([]);
@@ -64,7 +93,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     console.log(entries);
   }, [entries]);
 
-  const weekDayLabels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const prevMonth = (): void => {
     setCurrentDate(subMonths(currentDate, 1));
@@ -83,9 +112,15 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
       (journal) => journal[0]["journal-day"].toString() === day
     );
     if (!journal) return;
+
     // logseq.Editor.openInRightSidebar(journal[0].uuid); // May be if shift is pressed
     logseq.App.pushState("page", { name: journal[0]["original-name"] });
     closeCalender();
+  };
+
+  const openPage = (name: string): void => {
+    logseq.App.pushState("page", { name });
+    closeCalender()
   };
 
   const getDaysToDisplay = (): Date[] => {
@@ -94,48 +129,62 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     return eachDayOfInterval({ start, end });
   };
 
-  const renderCalendar = (): JSX.Element => {
-    const days = getDaysToDisplay();
+  const dayCell = (day: Date): JSX.Element => {
+    const journal = entries.find(
+      (journal) => journal[0]["journal-day"].toString() === logseqDate(day)
+    );
 
     return (
-      <div className="grid grid-cols-7 h-85">
-        {days.map((day, index) => {
-          const journal = entries.find(
-            (journal) =>
-              journal[0]["journal-day"].toString() === format(day, "yyyyMMdd")
-          );
+      <div
+        className={`border border-gray-600 ${
+          !isSameMonth(day, currentDate) ? "text-gray-600 .opacity-40" : ""
+        }`}
+      >
+        <a
+          onClick={() => openJournal(logseqDate(day))}
+          className={`text-sm p-1
+        ${
+          isSameDay(day, new Date())
+            ? "bg-blue-500 text-white rounded-full"
+            : ""
+        }`}
+        >
+          {format(day, "d")}
+        </a>
+        <div>
+          {journal ? (
+            <a onClick={() => openJournal(logseqDate(day))}>
+              {journal[0].properties?.name}
+            </a>
+          ) : (
+            ""
+          )}
+        </div>
+      </div>
+    );
+  };
 
-          return (
+  const renderCalendar = (): JSX.Element => {
+    const daysInMonth = getDaysToDisplay();
+
+    const weeks = [...chunk(daysInMonth, 7)];
+
+    return (
+      <div className="grid grid-calendar-columns h-85">
+        {weeks.map((week) => {
+          const days = week;
+          const weekTitle = getWeekDateRange(days[0]);
+          return [
             <div
-              key={index}
-              className={`border border border-gray-600 ${
-                !isSameMonth(day, currentDate)
-                  ? "text-gray-600 .opacity-40"
-                  : ""
-              }`}
+              key="w-number"
+              onClick={() => {
+                openPage(weekTitle);
+              }}
             >
-              <a
-                className={`text-sm p-1
-              ${
-                isSameDay(day, new Date())
-                  ? "bg-blue-500 text-white rounded-full"
-                  : ""
-              }`}
-                onClick={() => openJournal(format(day, "yyyyMMdd"))}
-              >
-                {format(day, "d")}
-              </a>
-              <div>
-                {journal ? (
-                  <a onClick={() => openJournal(format(day, "yyyyMMdd"))}>
-                    {journal[0].properties?.name}
-                  </a>
-                ) : (
-                  ""
-                )}
-              </div>
-            </div>
-          );
+              {weekTitle.replace(/^\d+ (W\d+).+/, "$1")}
+            </div>,
+            days.map(dayCell),
+          ];
         })}
       </div>
     );
@@ -155,7 +204,8 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
           {format(currentDate, "MMMM yyyy")}
         </h2>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center mb-2">
+      <div className="grid grid-calendar-columns gap-1 text-center mb-2">
+        <div key="w-number">W</div>
         {weekDayLabels.map((day) => (
           <div key={day} className="font-medium text-sm">
             {day}
