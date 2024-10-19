@@ -8,7 +8,7 @@ function App() {
   if (visible) {
     return (
       <main
-        className="h-full w-full border border-red-500 p-2"
+        className="h-full w-full"
         onClick={(e) => {
           console.log("Closing");
           if (!innerRef.current?.contains(e.target as any)) {
@@ -16,7 +16,7 @@ function App() {
           }
         }}
       >
-        <div ref={innerRef} className="text-size-2em text-gray-100 h-full border border-blue-500">
+        <div ref={innerRef} className="text-size-2em text-gray-100 h-full">
           <Calendar />
         </div>
       </main>

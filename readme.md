@@ -1,6 +1,6 @@
 # Glocal
 
-- Close button
+- Clicking on day title should open Journal
 - Month view should have links to Week Page as well
   - It should open week page on click
 - Show Option to go to year view
@@ -11,3 +11,4 @@
 
 - [x] Show Month - with links to each day's journal entry
 - [x] Show day title
+- Close button

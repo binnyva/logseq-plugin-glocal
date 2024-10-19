@@ -12,6 +12,7 @@ import {
   endOfWeek,
 } from "date-fns";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
+import CloseModal from "./CloseModal";
 
 interface CalendarProps {
   initialDate?: Date;
@@ -34,7 +35,6 @@ async function getJournalEntriesFromTo(
       [(>= ?d ${format(startDate, "yyyyMMdd")})] 
       [(<= ?d ${format(endDate, "yyyyMMdd")})]
     ]`);
-
   } catch (e) {
     console.error(e);
   }
@@ -52,7 +52,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
       const end = endOfWeek(endOfMonth(currentDate));
 
       const journalEntries = await getJournalEntriesFromTo(start, end);
-      if(journalEntries) {
+      if (journalEntries) {
         setEntries(journalEntries);
       }
     };
@@ -62,7 +62,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
 
   useEffect(() => {
     console.log(entries);
-  }, [entries])
+  }, [entries]);
 
   const weekDayLabels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -74,6 +74,10 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     setCurrentDate(addMonths(currentDate, 1));
   };
 
+  const closeCalender = (): void => {
+    window.logseq.hideMainUI();
+  };
+
   const openJournal = (day: string): void => {
     const journal = entries.find(
       (journal) => journal[0]["journal-day"].toString() === day
@@ -81,7 +85,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     if (!journal) return;
     // logseq.Editor.openInRightSidebar(journal[0].uuid); // May be if shift is pressed
     logseq.App.pushState("page", { name: journal[0]["original-name"] });
-    window.logseq.hideMainUI();
+    closeCalender();
   };
 
   const getDaysToDisplay = (): Date[] => {
@@ -97,7 +101,8 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
       <div className="grid grid-cols-7 h-85">
         {days.map((day, index) => {
           const journal = entries.find(
-            (journal) => journal[0]["journal-day"].toString() === format(day, 'yyyyMMdd')
+            (journal) =>
+              journal[0]["journal-day"].toString() === format(day, "yyyyMMdd")
           );
 
           return (
@@ -109,7 +114,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
                   : ""
               }`}
             >
-              <span
+              <a
                 className={`text-sm p-1
               ${
                 isSameDay(day, new Date())
@@ -119,8 +124,16 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
                 onClick={() => openJournal(format(day, "yyyyMMdd"))}
               >
                 {format(day, "d")}
-              </span>
-              <div>{journal ? journal[0].properties?.name : ""}</div>
+              </a>
+              <div>
+                {journal ? (
+                  <a onClick={() => openJournal(format(day, "yyyyMMdd"))}>
+                    {journal[0].properties?.name}
+                  </a>
+                ) : (
+                  ""
+                )}
+              </div>
             </div>
           );
         })}
@@ -130,6 +143,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
 
   return (
     <div className="w-full h-full p-4 rounded shadow">
+      <CloseModal onClick={closeCalender} />
       <div className="flex justify-between items-center mb-4">
         <button onClick={prevMonth}>
           <span className="h-4 w-4">&lt;</span>
