@@ -123,6 +123,12 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     closeCalender()
   };
 
+  const openMonth = (date: Date): void => {
+    const monthPageName = format(date, 'yyyy-MM MMMM')
+    logseq.App.pushState("page", { name: monthPageName })
+    closeCalender();
+  }
+
   const getDaysToDisplay = (): Date[] => {
     const start = startOfWeek(startOfMonth(currentDate));
     const end = endOfWeek(endOfMonth(currentDate));
@@ -200,7 +206,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         <button onClick={nextMonth} className="px-4">
           <span className="h-4 w-4">&gt;</span>
         </button>
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold" onClick={() => openMonth(currentDate)}>
           {format(currentDate, "MMMM yyyy")}
         </h2>
       </div>
