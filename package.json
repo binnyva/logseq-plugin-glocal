@@ -39,6 +39,7 @@
   },
   "logseq": {
     "id": "binnyva-logseq-plugin-glocal",
+    "title": "Glocal",
     "icon": "./logo.svg"
   }
 }
