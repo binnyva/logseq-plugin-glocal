@@ -148,7 +148,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
       >
         <a
           onClick={() => openJournal(logseqDate(day))}
-          className={`text-sm p-1
+          className={`text-sm p-1 clickable 
         ${
           isSameDay(day, new Date())
             ? "bg-blue-500 text-white rounded-full"
@@ -159,7 +159,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         </a>
         <div>
           {journal ? (
-            <a onClick={() => openJournal(logseqDate(day))}>
+            <a className="clickable" onClick={() => openJournal(logseqDate(day))}>
               {journal[0].properties?.name}
             </a>
           ) : (
@@ -182,6 +182,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
           const weekTitle = getWeekDateRange(days[0]);
           return [
             <div
+              className="clickable text-center"
               key="w-number"
               onClick={() => {
                 openPage(weekTitle);
@@ -200,18 +201,18 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     <div className="w-full h-full p-4 rounded shadow">
       <CloseModal onClick={closeCalender} />
       <div className="flex flex-none items-center mb-4">
-        <button onClick={prevMonth} className="px-4">
+        <button onClick={prevMonth} className="px-4 clickable">
           <span className="h-4 w-4">&lt;</span>
         </button>
-        <button onClick={nextMonth} className="px-4">
+        <button onClick={nextMonth} className="px-4 clickable">
           <span className="h-4 w-4">&gt;</span>
         </button>
-        <h2 className="text-lg font-semibold" onClick={() => openMonth(currentDate)}>
+        <h2 className="text-lg font-semibold clickable" onClick={() => openMonth(currentDate)}>
           {format(currentDate, "MMMM yyyy")}
         </h2>
       </div>
-      <div className="grid grid-calendar-columns gap-1 text-center mb-2">
-        <div key="w-number">W</div>
+      <div className="grid grid-calendar-columns text-center mb-2">
+        <div key="w-number">Week</div>
         {weekDayLabels.map((day) => (
           <div key={day} className="font-medium text-sm">
             {day}
