@@ -14,3 +14,8 @@
   opacity: 1;
   cursor: pointer;
 }
+
+.tag-container {
+  margin-top: 4px;
+  font-size: x-small;
+}

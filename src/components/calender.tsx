@@ -13,6 +13,7 @@ import {
   getWeek,
   getMonth,
 } from "date-fns";
+import { tagColors } from "../constants";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
 import CloseModal from "./CloseModal";
 import './calender.css';
@@ -65,6 +66,23 @@ function getWeekDateRange(date: Date) {
   return `${year} W${weekNumber} ${lastSunday}-${nextSaturday}`;
 }
 
+// :TODO Move to utils
+const getTagColor = (tag: string) => {
+  let color;
+  if (tagColors[tag]) {
+    color = tagColors[tag];
+  } else {
+    color = getRandomColor();
+    tagColors[tag] = color;
+  }
+  return color;
+}
+
+const getRandomColor = () => {
+  const limit = 360;
+  const hue = Math.floor(Math.random() * limit);
+  return `hsl(${hue}deg, 50%, 50%)`;
+}
 function* chunk<T>(arr: T[], n: number): Generator<T[], void> {
   for (let i = 0; i < arr.length; i += n) {
     yield arr.slice(i, i + n);
@@ -89,9 +107,10 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
     fetchEntries();
   }, [currentDate]);
 
-  useEffect(() => {
-    console.log(entries);
-  }, [entries]);
+  // Debug Mode
+  // useEffect(() => {
+  //   console.log(entries);
+  // }, [entries]);
 
   const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -136,9 +155,10 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
   };
 
   const dayCell = (day: Date): JSX.Element => {
-    const journal = entries.find(
+    const dayData = entries.find(
       (journal) => journal[0]["journal-day"].toString() === logseqDate(day)
     );
+    const journal = dayData ? dayData[0] : null;
 
     return (
       <div
@@ -160,8 +180,19 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         <div>
           {journal ? (
             <a className="clickable" onClick={() => openJournal(logseqDate(day))}>
-              {journal[0].properties?.name}
+              {journal.properties?.name}
             </a>
+          ) : (
+            ""
+          )}
+
+          {journal && journal.properties?.tags ? (
+            <div className="tag-container">
+              {journal.properties.tags.map((tag: string) => {
+                const tagBgColor = getTagColor(tag);
+                return <span className="tag-name px-1" style={{"backgroundColor": tagBgColor}} key={tag}>#{tag} </span>
+              })}
+            </div>
           ) : (
             ""
           )}
