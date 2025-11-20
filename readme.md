@@ -24,3 +24,10 @@
 
 - Week start day
 - Title Name Formats for Week, Month, Year, Quarter
+
+## Dev Process 
+
+- Make changes to code
+- Run `npm run build`
+- Logseq > Plugins > Glocal > Reload
+- Cmd + Option + I on Mac to open the console. Ctrl + Shift + I on Linux
