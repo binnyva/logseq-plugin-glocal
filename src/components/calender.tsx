@@ -12,12 +12,13 @@ import {
   endOfWeek,
   getWeek,
   getMonth,
+  getQuarter,
   addDays,
 } from "date-fns";
 import { tagColors } from "../constants";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
 import CloseModal from "./CloseModal";
-import './calender.css';
+import "./calender.css";
 
 interface CalendarProps {
   initialDate?: Date;
@@ -41,7 +42,10 @@ async function getJournalEntriesFromTo(
         [(<= ?d ${format(endDate, "yyyyMMdd")})]
       ]`);
   } catch (e) {
-    console.error(e);
+    console.error(
+      `Error fetching Journal Data from ${startDate} to ${endDate}`,
+      e
+    );
   }
 
   return pages;
@@ -58,7 +62,7 @@ async function getWeekEntriesFromTo(
   do {
     weekTitles.push(getWeekTitle(curDate).toLowerCase());
     curDate = addDays(curDate, 7);
-  } while(curDate <= endDate);
+  } while (curDate <= endDate);
 
   try {
     pages = await logseq.DB.datascriptQuery(`
@@ -70,11 +74,14 @@ async function getWeekEntriesFromTo(
         [?p :block/journal? false]
         [?p :block/name ?n]
         [(contains? #{
-          ${weekTitles.map(title => `"${title}"`).join(' ')}
+          ${weekTitles.map((title) => `"${title}"`).join(" ")}
           } ?n)]
       ]`);
   } catch (e) {
-    console.error(`Error Fetching Week Data from ${startDate} to ${endDate}`, e);
+    console.error(
+      `Error fetching Week Data from ${startDate} to ${endDate}`,
+      e
+    );
   }
 
   return pages;
@@ -84,10 +91,22 @@ function logseqDate(day: Date): string {
   return format(day, "yyyyMMdd");
 }
 
+// Return this format: 2025 Q4 Oct-Dec
+function getQuarterTitle (date: Date): string {
+  const quarter = getQuarter(date);
+  const quarterMonths = {
+    1: 'Jan-Mar',
+    2: 'Apr-Jun',
+    3: 'Jul-Sep',
+    4: 'Oct-Dec'
+  };
+  return format(date, "yyyy 'Q'Q ") + quarterMonths[quarter as keyof typeof quarterMonths];
+}
+
 function getWeekTitle(date: Date) {
   const weekStart = startOfWeek(date, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
-  const weekNumber = getWeek(date, { weekStartsOn: 0 }) // 0 for Sunday, 1 for Monday
+  const weekNumber = getWeek(date, { weekStartsOn: 0 }); // 0 for Sunday, 1 for Monday
 
   const lastSunday = format(weekStart, "MMM d");
   const nextSaturday = format(
@@ -110,13 +129,13 @@ const getTagColor = (tag: string) => {
     tagColors[tag] = color;
   }
   return color;
-}
+};
 
 const getRandomColor = () => {
   const limit = 360;
   const hue = Math.floor(Math.random() * limit);
   return `hsl(${hue}deg, 50%, 50%)`;
-}
+};
 function* chunk<T>(arr: T[], n: number): Generator<T[], void> {
   for (let i = 0; i < arr.length; i += n) {
     yield arr.slice(i, i + n);
@@ -179,20 +198,32 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
 
   const openPage = (name: string): void => {
     logseq.App.pushState("page", { name });
-    closeCalender()
+    closeCalender();
   };
 
   const openMonth = (date: Date): void => {
-    const monthPageName = format(date, 'yyyy-MM MMMM')
-    logseq.App.pushState("page", { name: monthPageName })
+    const monthPageName = format(date, "yyyy-MM MMMM");
+    logseq.App.pushState("page", { name: monthPageName });
     closeCalender();
-  }
-
-  const getDaysToDisplay = (): Date[] => {
-    const start = startOfWeek(startOfMonth(currentDate));
-    const end = endOfWeek(endOfMonth(currentDate));
-    return eachDayOfInterval({ start, end });
   };
+
+  const openQuarter = (date: Date): void => {
+    const quarterPageName = getQuarterTitle(date);
+    logseq.App.pushState("page", { name: quarterPageName });
+    closeCalender();
+  };
+
+  const openYear = (date: Date): void => {
+    const yearPageName = format(date, "yyyy");
+    logseq.App.pushState("page", { name: yearPageName });
+    closeCalender();
+  };
+
+  const getDaysToDisplay = (): Date[] =>
+    eachDayOfInterval({
+      start: startOfWeek(startOfMonth(currentDate)),
+      end: endOfWeek(endOfMonth(currentDate)),
+    });
 
   const dayCell = (day: Date): JSX.Element => {
     const dayData = entries.find(
@@ -219,7 +250,10 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         </a>
         <div>
           {journal ? (
-            <a className="clickable" onClick={() => openJournal(logseqDate(day))}>
+            <a
+              className="clickable"
+              onClick={() => openJournal(logseqDate(day))}
+            >
               {journal.properties?.name}
             </a>
           ) : (
@@ -230,7 +264,15 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
             <div className="tag-container">
               {journal.properties.tags.map((tag: string) => {
                 const tagBgColor = getTagColor(tag);
-                return <span className="tag-name px-1" style={{"backgroundColor": tagBgColor}} key={tag}>#{tag} </span>
+                return (
+                  <span
+                    className="tag-name px-1"
+                    style={{ backgroundColor: tagBgColor }}
+                    key={tag}
+                  >
+                    #{tag}{" "}
+                  </span>
+                );
               })}
             </div>
           ) : (
@@ -243,7 +285,6 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
 
   const renderCalendar = (): JSX.Element => {
     const daysInMonth = getDaysToDisplay();
-
     const weeks = [...chunk(daysInMonth, 7)];
 
     return (
@@ -251,23 +292,24 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         {weeks.map((week, index) => {
           const days = week;
           const weekTitle = getWeekTitle(days[0]);
-          const weekName = weekEntries.find(
-            (weekEntry) => weekEntry[0]["original-name"] === weekTitle
-          )?.[0]?.properties?.name || "";
+          const weekName =
+            weekEntries.find(
+              (weekEntry) => weekEntry[0]["original-name"] === weekTitle
+            )?.[0]?.properties?.name || "";
 
           return [
-            (<div className="week-info" key={index}>
+            <div className="week-info" key={index}>
               <div
-              className="clickable text-center"
-              key="w-number"
-              onClick={() => {
-                openPage(weekTitle);
-              }}
-            >
-              {weekTitle.replace(/^\d+ (W\d+).+/, "$1")}
-            </div>
-            <div className="week-name">{weekName}</div>
-            </div>),
+                className="clickable text-center"
+                key="w-number"
+                onClick={() => {
+                  openPage(weekTitle);
+                }}
+              >
+                {weekTitle.replace(/^\d+ (W\d+).+/, "$1")}
+              </div>
+              <div className="week-name">{weekName}</div>
+            </div>,
             days.map(dayCell),
           ];
         })}
@@ -282,12 +324,27 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         <button onClick={prevMonth} className="px-4 clickable">
           <span className="h-4 w-4">&lt;</span>
         </button>
+        <h2
+          className="text-lg font-semibold clickable"
+          onClick={() => openYear(currentDate)}
+        >
+          {format(currentDate, "yyyy")}
+        </h2> &nbsp; : &nbsp;  
+        <h2
+          className="text-lg font-semibold clickable"
+          onClick={() => openQuarter(currentDate)}
+        >
+          Q{format(currentDate, "Q")}
+        </h2> &nbsp; : &nbsp; 
+        <h2
+          className="text-lg font-semibold clickable"
+          onClick={() => openMonth(currentDate)}
+        >
+          {format(currentDate, "MMMM")}
+        </h2>
         <button onClick={nextMonth} className="px-4 clickable">
           <span className="h-4 w-4">&gt;</span>
         </button>
-        <h2 className="text-lg font-semibold clickable" onClick={() => openMonth(currentDate)}>
-          {format(currentDate, "MMMM yyyy")}
-        </h2>
       </div>
       <div className="grid grid-calendar-columns text-center mb-2">
         <div key="w-number">Week</div>
