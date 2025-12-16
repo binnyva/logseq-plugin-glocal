@@ -12,6 +12,7 @@ import {
   endOfWeek,
   getWeek,
   getMonth,
+  addDays,
 } from "date-fns";
 import { tagColors } from "../constants";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
@@ -33,14 +34,47 @@ async function getJournalEntriesFromTo(
         :block/name :block/properties :block/journal-day :block/uuid :block/original-name
         {:block/_page [:block/content]}])
       :where
-      [?b :block/page ?p]
-      [?p :block/journal? true]
-      [?p :block/journal-day ?d]
-      [(>= ?d ${format(startDate, "yyyyMMdd")})] 
-      [(<= ?d ${format(endDate, "yyyyMMdd")})]
-    ]`);
+        [?b :block/page ?p]
+        [?p :block/journal? true]
+        [?p :block/journal-day ?d]
+        [(>= ?d ${format(startDate, "yyyyMMdd")})] 
+        [(<= ?d ${format(endDate, "yyyyMMdd")})]
+      ]`);
   } catch (e) {
     console.error(e);
+  }
+
+  return pages;
+}
+
+async function getWeekEntriesFromTo(
+  startDate: Date,
+  endDate: Date
+): Promise<PageEntity[]> {
+  let pages;
+
+  const weekTitles = [];
+  let curDate = startDate;
+  do {
+    weekTitles.push(getWeekTitle(curDate).toLowerCase());
+    curDate = addDays(curDate, 7);
+  } while(curDate <= endDate);
+
+  try {
+    pages = await logseq.DB.datascriptQuery(`
+      [:find (pull ?p [
+        :block/name :block/properties :block/uuid :block/original-name
+        {:block/_page [:block/content]}])
+      :where
+        [?b :block/page ?p]
+        [?p :block/journal? false]
+        [?p :block/name ?n]
+        [(contains? #{
+          ${weekTitles.map(title => `"${title}"`).join(' ')}
+          } ?n)]
+      ]`);
+  } catch (e) {
+    console.error(`Error Fetching Week Data from ${startDate} to ${endDate}`, e);
   }
 
   return pages;
@@ -50,7 +84,7 @@ function logseqDate(day: Date): string {
   return format(day, "yyyyMMdd");
 }
 
-function getWeekDateRange(date: Date) {
+function getWeekTitle(date: Date) {
   const weekStart = startOfWeek(date, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
   const weekNumber = getWeek(date, { weekStartsOn: 0 }) // 0 for Sunday, 1 for Monday
@@ -61,7 +95,7 @@ function getWeekDateRange(date: Date) {
     getMonth(weekStart) != getMonth(weekEnd) ? "MMM d" : "d" // if weeks start and stop in separate months, show month name in end too.
   );
 
-  const year = format(date, "yyyy");
+  const year = format(weekEnd, "yyyy"); // Use weekEnd to get the correct year for weeks that span new year
 
   return `${year} W${weekNumber} ${lastSunday}-${nextSaturday}`;
 }
@@ -92,6 +126,7 @@ function* chunk<T>(arr: T[], n: number): Generator<T[], void> {
 const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
   const [entries, setEntries] = useState<PageEntity[]>([]);
+  const [weekEntries, setWeekEntries] = useState<PageEntity[]>([]);
 
   useEffect(() => {
     const fetchEntries = async () => {
@@ -101,6 +136,11 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
       const journalEntries = await getJournalEntriesFromTo(start, end);
       if (journalEntries) {
         setEntries(journalEntries);
+      }
+
+      const weekData = await getWeekEntriesFromTo(start, end);
+      if (weekData) {
+        setWeekEntries(weekData);
       }
     };
 
@@ -208,11 +248,16 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
 
     return (
       <div className="grid grid-calendar-columns h-85">
-        {weeks.map((week) => {
+        {weeks.map((week, index) => {
           const days = week;
-          const weekTitle = getWeekDateRange(days[0]);
+          const weekTitle = getWeekTitle(days[0]);
+          const weekName = weekEntries.find(
+            (weekEntry) => weekEntry[0]["original-name"] === weekTitle
+          )?.[0]?.properties?.name || "";
+
           return [
-            <div
+            (<div className="week-info" key={index}>
+              <div
               className="clickable text-center"
               key="w-number"
               onClick={() => {
@@ -220,7 +265,9 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
               }}
             >
               {weekTitle.replace(/^\d+ (W\d+).+/, "$1")}
-            </div>,
+            </div>
+            <div className="week-name">{weekName}</div>
+            </div>),
             days.map(dayCell),
           ];
         })}
