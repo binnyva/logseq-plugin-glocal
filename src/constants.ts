@@ -9,3 +9,5 @@ export const tagColors: Hash = {
   'publish': '#1e26fc',
   'walk': '#000'
 }
+
+export const weekStartsOn = 0; // 0 for Sunday, 1 for Monday

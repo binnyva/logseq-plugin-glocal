@@ -1,7 +1,7 @@
 import { LSPluginUserEvents, PageEntity } from "@logseq/libs/dist/LSPlugin.user";
 import React from "react";
 import { addDays, addMonths, endOfWeek, format, getMonth, getQuarter, getWeek, startOfWeek } from "date-fns";
-import { tagColors } from "./constants";
+import { tagColors, weekStartsOn } from "./constants";
 
 let _visible = logseq.isMainUIVisible;
 
@@ -49,9 +49,9 @@ export function getQuarterTitle (date: Date): string {
 }
 
 export function getWeekTitle(date: Date) {
-  const weekStart = startOfWeek(date, { weekStartsOn: 0 });
-  const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
-  const weekNumber = zeroPad(getWeek(date, { weekStartsOn: 0 }), 2); // 0 for Sunday, 1 for Monday
+  const weekStart = startOfWeek(date, { weekStartsOn });
+  const weekEnd = endOfWeek(date, { weekStartsOn });
+  const weekNumber = zeroPad(getWeek(date, { weekStartsOn }), 2);
 
   const lastSunday = format(weekStart, "MMM d");
   const nextSaturday = format(
