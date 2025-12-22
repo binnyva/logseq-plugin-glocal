@@ -1,7 +1,7 @@
 {
   "name": "logseq-plugin-glocal",
-  "version": "0.0.1",
-    "description": "Adds a Calendar system into Logseq. Year > Quarter > Month > Week > Days",
+  "version": "0.1.0",
+  "description": "Adds a Calendar system into Logseq. Year > Quarter > Month > Week > Days",
   "main": "dist/index.html",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@logseq/libs": "^0.0.14",
     "date-fns": "^4.1.0",
+    "lucide-react": "^0.562.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

@@ -9,140 +9,20 @@ import {
   isSameMonth,
   isSameDay,
   startOfWeek,
-  endOfWeek,
-  getWeek,
-  getMonth,
-  getQuarter,
-  addDays,
+  endOfWeek
 } from "date-fns";
-import { tagColors } from "../constants";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
-import CloseModal from "./CloseModal";
+import { CalendarSearch, ChevronLeft, ChevronRight } from 'lucide-react'
 import "./calender.css";
+import { ViewModes } from "../types";
+import { chunk, getJournalEntriesFromTo, getMonthTitle, getQuarterTitle, getTagColor, getWeekEntriesFromTo, getWeekTitle, logseqDate } from "../utils";
 
 interface CalendarProps {
   initialDate?: Date;
+  updateViewMode: (mode: ViewModes, date: Date) => void;
 }
 
-async function getJournalEntriesFromTo(
-  startDate: Date,
-  endDate: Date
-): Promise<PageEntity[]> {
-  let pages;
-  try {
-    pages = await logseq.DB.datascriptQuery(`
-      [:find (pull ?p [
-        :block/name :block/properties :block/journal-day :block/uuid :block/original-name
-        {:block/_page [:block/content]}])
-      :where
-        [?b :block/page ?p]
-        [?p :block/journal? true]
-        [?p :block/journal-day ?d]
-        [(>= ?d ${format(startDate, "yyyyMMdd")})] 
-        [(<= ?d ${format(endDate, "yyyyMMdd")})]
-      ]`);
-  } catch (e) {
-    console.error(
-      `Error fetching Journal Data from ${startDate} to ${endDate}`,
-      e
-    );
-  }
-
-  return pages;
-}
-
-async function getWeekEntriesFromTo(
-  startDate: Date,
-  endDate: Date
-): Promise<PageEntity[]> {
-  let pages;
-
-  const weekTitles = [];
-  let curDate = startDate;
-  do {
-    weekTitles.push(getWeekTitle(curDate).toLowerCase());
-    curDate = addDays(curDate, 7);
-  } while (curDate <= endDate);
-
-  try {
-    pages = await logseq.DB.datascriptQuery(`
-      [:find (pull ?p [
-        :block/name :block/properties :block/uuid :block/original-name
-        {:block/_page [:block/content]}])
-      :where
-        [?b :block/page ?p]
-        [?p :block/journal? false]
-        [?p :block/name ?n]
-        [(contains? #{
-          ${weekTitles.map((title) => `"${title}"`).join(" ")}
-          } ?n)]
-      ]`);
-  } catch (e) {
-    console.error(
-      `Error fetching Week Data from ${startDate} to ${endDate}`,
-      e
-    );
-  }
-
-  return pages;
-}
-
-function logseqDate(day: Date): string {
-  return format(day, "yyyyMMdd");
-}
-
-// Return this format: 2025 Q4 Oct-Dec
-function getQuarterTitle (date: Date): string {
-  const quarter = getQuarter(date);
-  const quarterMonths = {
-    1: 'Jan-Mar',
-    2: 'Apr-Jun',
-    3: 'Jul-Sep',
-    4: 'Oct-Dec'
-  };
-  return format(date, "yyyy 'Q'Q ") + quarterMonths[quarter as keyof typeof quarterMonths];
-}
-
-function getWeekTitle(date: Date) {
-  const weekStart = startOfWeek(date, { weekStartsOn: 0 });
-  const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
-  const weekNumber = getWeek(date, { weekStartsOn: 0 }); // 0 for Sunday, 1 for Monday
-
-  const lastSunday = format(weekStart, "MMM d");
-  const nextSaturday = format(
-    weekEnd,
-    getMonth(weekStart) != getMonth(weekEnd) ? "MMM d" : "d" // if weeks start and stop in separate months, show month name in end too.
-  );
-
-  const year = format(weekEnd, "yyyy"); // Use weekEnd to get the correct year for weeks that span new year
-
-  return `${year} W${weekNumber} ${lastSunday}-${nextSaturday}`;
-}
-
-// :TODO Move to utils
-const getTagColor = (tag: string) => {
-  let color;
-  if (tagColors[tag]) {
-    color = tagColors[tag];
-  } else {
-    color = getRandomColor();
-    tagColors[tag] = color;
-  }
-  return color;
-};
-
-const getRandomColor = () => {
-  const limit = 360;
-  const hue = Math.floor(Math.random() * limit);
-  return `hsl(${hue}deg, 50%, 50%)`;
-};
-function* chunk<T>(arr: T[], n: number): Generator<T[], void> {
-  for (let i = 0; i < arr.length; i += n) {
-    yield arr.slice(i, i + n);
-  }
-}
-
-const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
+const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date(), updateViewMode }) => {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
   const [entries, setEntries] = useState<PageEntity[]>([]);
   const [weekEntries, setWeekEntries] = useState<PageEntity[]>([]);
@@ -202,7 +82,7 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
   };
 
   const openMonth = (date: Date): void => {
-    const monthPageName = format(date, "yyyy-MM MMMM");
+    const monthPageName = getMonthTitle(date);
     logseq.App.pushState("page", { name: monthPageName });
     closeCalender();
   };
@@ -319,17 +199,18 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
 
   return (
     <div className="w-full h-full p-4 rounded shadow">
-      <CloseModal onClick={closeCalender} />
       <div className="flex flex-none items-center mb-4">
-        <button onClick={prevMonth} className="px-4 clickable">
-          <span className="h-4 w-4">&lt;</span>
+        <button onClick={prevMonth} className="clickable">
+          <ChevronLeft />
         </button>
         <h2
           className="text-lg font-semibold clickable"
           onClick={() => openYear(currentDate)}
         >
           {format(currentDate, "yyyy")}
-        </h2> &nbsp; : &nbsp;  
+        </h2> 
+        <span onClick={() => updateViewMode('year', currentDate)} className="px-2"> <CalendarSearch size={16} /></span>
+        &nbsp; : &nbsp;  
         <h2
           className="text-lg font-semibold clickable"
           onClick={() => openQuarter(currentDate)}
@@ -342,8 +223,8 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date() }) => {
         >
           {format(currentDate, "MMMM")}
         </h2>
-        <button onClick={nextMonth} className="px-4 clickable">
-          <span className="h-4 w-4">&gt;</span>
+        <button onClick={nextMonth} className="clickable">
+          <ChevronRight />
         </button>
       </div>
       <div className="grid grid-calendar-columns text-center mb-2">
