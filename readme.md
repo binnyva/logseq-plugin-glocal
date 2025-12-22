@@ -7,14 +7,6 @@
 - Clicking outside the calendar should close it
   - Right now it breaks all buttons above the calendar. Eg. Plugin Icon
 - Used colors in CSS should work with themes
-- Show Option to go to year view
-  - Show name of months with links to it
-  - Show all week links
-
-### Todo, Refactor
-
-- Move utils to folder, different files
-- Setup ESList
   
 ## Done
 
@@ -26,6 +18,10 @@
   - It should open week page on click
 - Links should have a different hover color so users know its clickable
 - Year, Quarter Link
+- Move utils to folder, different files
+- Show Option to go to year view
+  - Show name of months with links to it
+  - Show all week links
 
 ## Config
 

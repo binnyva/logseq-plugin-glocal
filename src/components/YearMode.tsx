@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarSearch } from 'lucide-react'
+import { CalendarSearch } from "lucide-react";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
 import {
   startOfWeek,
@@ -13,19 +13,21 @@ import {
   getYear,
   format,
 } from "date-fns";
+
+import {
+  getMonthTitle,
+  getWeekTitle,
+} from "../utils/date";
 import {
   getMonthEntriesFromTo,
-  getMonthTitle,
   getWeekEntriesFromTo,
-  getWeekTitle,
-} from "../utils";
+} from "../utils/data-fetching";
 import { weekStartsOn } from "../constants";
 import { ViewModes } from "../types";
 
 interface YearModeProps {
   initialDate?: Date;
-
-    updateViewMode: (mode: ViewModes, date: Date) => void;
+  updateViewMode: (mode: ViewModes, date: Date) => void;
 }
 interface WeekEntries {
   [key: string]: {
@@ -139,13 +141,24 @@ export const YearMode: React.FC<YearModeProps> = ({
             return (
               <tr key={monthKey} className="my-4">
                 <td className="px-2">
-                  <div
-                    className={monthClass}
-                  >
-                    <span onClick={() => openPage(month.title)} className="float-left">{format(month.from, "MMMM")}</span>
-                    <span onClick={() => updateViewMode('month', month.from)} className="float-left pt-1 px-1"><CalendarSearch size={16} /></span>
+                  <div className={monthClass}>
+                    <span
+                      onClick={() => openPage(month.title)}
+                      className="float-left"
+                    >
+                      {format(month.from, "MMMM")}
+                    </span>
+                    <span
+                      onClick={() => updateViewMode("month", month.from)}
+                      className="float-left pt-1 px-1"
+                    >
+                      <CalendarSearch size={16} />
+                    </span>
                     <br />
-                    <span className="font-bold" onClick={() => openPage(month.title)}>
+                    <span
+                      className="font-bold"
+                      onClick={() => openPage(month.title)}
+                    >
                       {(hasEntry && month.entries?.[0]?.properties?.name) || ""}
                     </span>
                   </div>

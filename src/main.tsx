@@ -32,15 +32,15 @@ function main() {
 
   logseq.provideModel(createModel());
   logseq.setMainUIInlineStyle({
-    position: 'fixed',
-    zIndex: 'var(--ls-z-index-level-2)',
-    top: '40px',
-    left: '0',
-    right: '0',
-    bottom: '0',
-    backgroundColor: 'var(--ls-primary-background-color)',
-  })
-  
+    position: "fixed",
+    zIndex: "var(--ls-z-index-level-2)",
+    top: "40px",
+    left: "0",
+    right: "0",
+    bottom: "0",
+    backgroundColor: "var(--ls-primary-background-color)",
+  });
+
   const openIconName = "show-global-calender";
 
   logseq.provideStyle(css`
@@ -53,7 +53,7 @@ function main() {
     .${openIconName}:hover {
       opacity: 0.9;
     }
-    
+
     .glocal-area {
       max-width: 100%;
       max-height: calc(100% - 40px);
@@ -66,7 +66,7 @@ function main() {
     key: openIconName,
     template: `
       <a data-on-click="show" class="button">
-        <i class="ti ti-comet"></i>
+        <i class="ti ti-calendar-stats"></i>
       </a>
     `,
   });

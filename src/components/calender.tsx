@@ -9,20 +9,27 @@ import {
   isSameMonth,
   isSameDay,
   startOfWeek,
-  endOfWeek
+  endOfWeek,
 } from "date-fns";
 import { PageEntity } from "@logseq/libs/dist/LSPlugin";
-import { CalendarSearch, ChevronLeft, ChevronRight } from 'lucide-react'
-import "./calender.css";
+import { CalendarSearch, ChevronLeft, ChevronRight } from "lucide-react";
+
 import { ViewModes } from "../types";
-import { chunk, getJournalEntriesFromTo, getMonthTitle, getQuarterTitle, getTagColor, getWeekEntriesFromTo, getWeekTitle, logseqDate } from "../utils";
+import { getJournalEntriesFromTo, getWeekEntriesFromTo } from "../utils/data-fetching";
+import { getMonthTitle, getQuarterTitle, getWeekTitle, logseqDate } from "../utils/date";
+import { chunk, getTagColor } from "../utils/misc";
+
+import "./Calender.css";
 
 interface CalendarProps {
   initialDate?: Date;
   updateViewMode: (mode: ViewModes, date: Date) => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date(), updateViewMode }) => {
+const Calendar: React.FC<CalendarProps> = ({
+  initialDate = new Date(),
+  updateViewMode,
+}) => {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
   const [entries, setEntries] = useState<PageEntity[]>([]);
   const [weekEntries, setWeekEntries] = useState<PageEntity[]>([]);
@@ -208,15 +215,22 @@ const Calendar: React.FC<CalendarProps> = ({ initialDate = new Date(), updateVie
           onClick={() => openYear(currentDate)}
         >
           {format(currentDate, "yyyy")}
-        </h2> 
-        <span onClick={() => updateViewMode('year', currentDate)} className="px-2"> <CalendarSearch size={16} /></span>
-        &nbsp; : &nbsp;  
+        </h2>
+        <span
+          onClick={() => updateViewMode("year", currentDate)}
+          className="px-2"
+        >
+          {" "}
+          <CalendarSearch size={16} />
+        </span>
+        &nbsp; : &nbsp;
         <h2
           className="text-lg font-semibold clickable"
           onClick={() => openQuarter(currentDate)}
         >
           Q{format(currentDate, "Q")}
-        </h2> &nbsp; : &nbsp; 
+        </h2>{" "}
+        &nbsp; : &nbsp;
         <h2
           className="text-lg font-semibold clickable"
           onClick={() => openMonth(currentDate)}
