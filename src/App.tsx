@@ -11,12 +11,13 @@ function App() {
   const [viewMode, setViewMode] = React.useState<ViewModes>("month");
   const [currentDate, setCurrentDate] = React.useState<Date>(new Date());
 
-  const setViewAndDate = (mode: ViewModes, date: Date) => {
+  const setViewAndDate = (mode: ViewModes = 'month', date: Date = new Date()) => {
     setViewMode(mode);
     setCurrentDate(date);
   };
 
   const closeCalender = (): void => {
+    setViewAndDate();
     window.logseq.hideMainUI();
   };
 
@@ -27,13 +28,13 @@ function App() {
           <CloseModal onClick={closeCalender} />
           {viewMode === "month" && (
             <Calendar
-              updateViewMode={setViewAndDate}
+              setViewAndDate={setViewAndDate}
               initialDate={currentDate}
             />
           )}
           {viewMode === "year" && (
             <YearMode
-              updateViewMode={setViewAndDate}
+              setViewAndDate={setViewAndDate}
               initialDate={currentDate}
             />
           )}

@@ -27,7 +27,7 @@ import { ViewModes } from "../types";
 
 interface YearModeProps {
   initialDate?: Date;
-  updateViewMode: (mode: ViewModes, date: Date) => void;
+  setViewAndDate: (mode?: ViewModes, date?: Date) => void;
 }
 interface WeekEntries {
   [key: string]: {
@@ -49,7 +49,7 @@ interface MonthEntries {
 
 export const YearMode: React.FC<YearModeProps> = ({
   initialDate = new Date(),
-  updateViewMode,
+  setViewAndDate,
 }) => {
   const [currentDate] = useState<Date>(initialDate);
   const [monthEntries, setMonthEntries] = useState<PageEntity[]>([]);
@@ -76,6 +76,7 @@ export const YearMode: React.FC<YearModeProps> = ({
 
   const openPage = (pageName: string): void => {
     logseq.App.pushState("page", { name: pageName });
+    setViewAndDate();
     logseq.hideMainUI();
   };
 
@@ -149,7 +150,7 @@ export const YearMode: React.FC<YearModeProps> = ({
                       {format(month.from, "MMMM")}
                     </span>
                     <span
-                      onClick={() => updateViewMode("month", month.from)}
+                      onClick={() => setViewAndDate("month", month.from)}
                       className="float-left pt-1 px-1"
                     >
                       <CalendarSearch size={16} />

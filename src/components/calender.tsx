@@ -23,12 +23,12 @@ import "./Calender.css";
 
 interface CalendarProps {
   initialDate?: Date;
-  updateViewMode: (mode: ViewModes, date: Date) => void;
+  setViewAndDate: (mode?: ViewModes, date?: Date) => void;
 }
 
 const Calendar: React.FC<CalendarProps> = ({
   initialDate = new Date(),
-  updateViewMode,
+  setViewAndDate,
 }) => {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
   const [entries, setEntries] = useState<PageEntity[]>([]);
@@ -69,6 +69,7 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const closeCalender = (): void => {
+    setViewAndDate();
     window.logseq.hideMainUI();
   };
 
@@ -217,7 +218,7 @@ const Calendar: React.FC<CalendarProps> = ({
           {format(currentDate, "yyyy")}
         </h2>
         <span
-          onClick={() => updateViewMode("year", currentDate)}
+          onClick={() => setViewAndDate("year", currentDate)}
           className="px-2"
         >
           {" "}
