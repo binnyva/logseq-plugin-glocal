@@ -3,10 +3,11 @@
 ## Todo, Features
 
 - When opening calendar page again, it should show earlier date that was opened
-- Better name?
 - Clicking outside the calendar should close it
   - Right now it breaks all buttons above the calendar. Eg. Plugin Icon
 - Used colors in CSS should work with themes
+- Stats about tags
+- Search
   
 ## Done
 
